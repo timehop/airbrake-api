@@ -133,7 +133,11 @@ module AirbrakeAPI
     private
 
     def account_path
-      "#{protocol}://#{@account}.airbrake.io"
+      if should_use_new_api?
+        "#{protocol}://collect.airbrake.io/api/v1/projects/#{@account_id}"
+      else
+        "#{protocol}://#{@account}.airbrake.io"
+      end
     end
 
     def protocol
@@ -161,7 +165,7 @@ module AirbrakeAPI
     def connection(options={})
       default_options = {
         :headers => {
-          :accept => 'application/xml',
+          :accept => 'application/xml,application/json',
           :user_agent => user_agent,
         },
         :ssl => {:verify => false},
@@ -171,12 +175,17 @@ module AirbrakeAPI
         builder.use Faraday::Request::UrlEncoded
         builder.use AirbrakeAPI::Middleware::RaiseResponseError
         builder.use FaradayMiddleware::Mashify
-        builder.use FaradayMiddleware::ParseXml
+        builder.use FaradayMiddleware::ParseXml,  :content_type => /\bxml$/
+        builder.use FaradayMiddleware::ParseJson, :content_type => /\bjson$/
         builder.use AirbrakeAPI::Middleware::ScrubResponse
         builder.use AirbrakeAPI::Middleware::RaiseServerError
 
         builder.adapter adapter
       end
+    end
+
+    def should_use_new_api?
+      @api_version && @api_version >= 3 && @account_id
     end
 
   end
