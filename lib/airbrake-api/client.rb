@@ -57,15 +57,15 @@ module AirbrakeAPI
     # errors
 
     def unformatted_error_path(error_id)
-      "/groups/#{error_id}"
+      "#{path_prefix}/groups/#{error_id}"
     end
 
     def error_path(error_id)
-      "#{unformatted_error_path(error_id)}.xml"
+      "#{unformatted_error_path(error_id)}#{xml_suffix}"
     end
 
     def errors_path
-      '/groups.xml'
+      "#{path_prefix}/groups#{xml_suffix}"
     end
 
     def update(error, options = {})
@@ -75,22 +75,22 @@ module AirbrakeAPI
 
     def error(error_id, options = {})
       results = request(:get, error_path(error_id), options)
-      results.group || results.groups
+      results.group || results.groups || results
     end
 
     def errors(options = {})
       results = request(:get, errors_path, options)
-      results.group || results.groups
+      results.group || results.groups || (results.result && results.result.groups)
     end
 
     # notices
 
     def notice_path(notice_id, error_id)
-      "/groups/#{error_id}/notices/#{notice_id}.xml"
+      "#{path_prefix}/groups/#{error_id}/notices/#{notice_id}#{xml_suffix}"
     end
 
     def notices_path(error_id)
-      "/groups/#{error_id}/notices.xml"
+      "#{path_prefix}/groups/#{error_id}/notices#{xml_suffix}"
     end
 
     def notice(notice_id, error_id, options = {})
@@ -132,9 +132,17 @@ module AirbrakeAPI
 
     private
 
+    def path_prefix
+      should_use_new_api? ? "/api/v1/projects/#{@account_id}" : ""
+    end
+
+    def xml_suffix
+      should_use_new_api? ? "" : ".xml"
+    end
+
     def account_path
       if should_use_new_api?
-        "#{protocol}://collect.airbrake.io/api/v1/projects/#{@account_id}"
+        "#{protocol}://collect.airbrake.io"
       else
         "#{protocol}://#{@account}.airbrake.io"
       end
