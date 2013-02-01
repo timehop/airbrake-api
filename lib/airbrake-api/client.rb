@@ -95,7 +95,7 @@ module AirbrakeAPI
 
     def notice(notice_id, error_id, options = {})
       hash = request(:get, notice_path(notice_id, error_id), options)
-      hash.notice
+      hash.notice || hash
     end
 
     def notices(error_id, options = {}, &block)
@@ -114,7 +114,7 @@ module AirbrakeAPI
         data = request(:get, notices_path(error_id), :page => page + page_count)
 
         batch = if options[:raw]
-          data.notices
+          data.notices || data.result
         else
           # get info like backtraces by doing another api call to notice
           Parallel.map(data.notices, :in_threads => PARALLEL_WORKERS) do |notice_stub|
