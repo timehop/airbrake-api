@@ -113,7 +113,7 @@ module AirbrakeAPI
       while !options[:pages] || (page_count + 1) <= options[:pages]
         data = request(:get, notices_path(error_id), :page => page + page_count)
 
-        this_data = data.notices || data.resuilt
+        this_data = data.notices || data.result
         batch = if options[:raw]
           this_data
         else
