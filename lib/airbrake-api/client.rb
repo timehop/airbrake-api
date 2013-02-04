@@ -113,11 +113,12 @@ module AirbrakeAPI
       while !options[:pages] || (page_count + 1) <= options[:pages]
         data = request(:get, notices_path(error_id), :page => page + page_count)
 
+        this_data = data.notices || data.resuilt
         batch = if options[:raw]
-          data.notices || data.result
+          this_data
         else
           # get info like backtraces by doing another api call to notice
-          Parallel.map(data.notices, :in_threads => PARALLEL_WORKERS) do |notice_stub|
+          Parallel.map(this_data, :in_threads => PARALLEL_WORKERS) do |notice_stub|
             notice(notice_stub.id, error_id)
           end
         end
